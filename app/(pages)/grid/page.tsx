@@ -29,18 +29,20 @@ export default function GridPage() {
   };
 
   // TODO:Телепортация за границами
-  const wrapAround = (index: number): number => {
+  const wrapAround = (index: number, direction: string): number => {
     // Получаем координаты головы
-    let row = Math.floor(index / cols);
-    let col = index % cols;
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    let newRow = row;
+    let newCol = col;
 
     // Проверяем, не выходит ли голова за границы сетки
-    if (col < 0) col = cols - 1;
-    if (col >= cols) col = 0;
-    if (row < 0) row = rows - 1;
-    if (row >= rows) row = 0;
+    if (direction === 'right' && col >= cols) newCol = 0;
+    if (direction === 'left' && col < 0) newCol = cols - 1;
+    if (direction === 'down' && row >= rows) newRow = 0;
+    if (direction === 'up' && row < 0) newRow = rows - 1;
 
-    return row * cols + col;
+    return newRow * cols + newCol;
   };
 
   // Получаем случайную свободную клетку
