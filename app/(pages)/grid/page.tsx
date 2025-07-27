@@ -83,6 +83,25 @@ export default function GridPage() {
     return () => clearInterval(interval);
   }, [direction]);
 
+  // Управление
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const key = e.key;
+      if (key === 'ArrowRight' && direction !== 'left') {
+        setDirection('right');
+      } else if (key === 'ArrowLeft' && direction !== 'right') {
+        setDirection('left');
+      } else if (key === 'ArrowUp' && direction !== 'down') {
+        setDirection('up');
+      } else if (key === 'ArrowDown' && direction !== 'up') {
+        setDirection('down');
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [direction]);
+
   return (
     <div className='flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900'>
       {/* Контейнер грида */}
