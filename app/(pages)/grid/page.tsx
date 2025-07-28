@@ -12,33 +12,6 @@ export default function GridPage() {
   const rows = 20;
   const cols = 20;
 
-  // Вычисляем следующий индекс головы
-  // prettier-ignore
-  const getNextHead = (currentHead: number, direction: string): number => {
-    switch (direction) {
-      case 'right': return currentHead + 1;
-      case 'left':  return currentHead - 1;
-      case 'up':    return currentHead - cols;
-      case 'down':  return currentHead + cols;
-      default:      return currentHead;
-    }
-  };
-
-  // Телепортация за границами
-  const wrapAround = (index: number, direction: string): number => {
-    // Получаем координаты головы
-    const totalCells = rows * cols;
-    const col = index % cols;
-
-    // Проверяем, не выходит ли голова за границы сетки
-    if (direction === 'right' && col == 0) return index - cols;
-    if (direction === 'left' && col == cols - 1) return index + cols;
-    if (direction === 'down' && index >= totalCells) return index % totalCells;
-    if (direction === 'up' && index < 0) return index + totalCells;
-
-    return index;
-  };
-
   // Получаем случайную свободную клетку
   const getRandomFreeCell = (occupied: number[]): number => {
     const maxIndex = rows * cols - 1;
@@ -52,19 +25,54 @@ export default function GridPage() {
   // Движение змейки
   const moveSnake = () => {
     setSnake((prev) => {
-      // Вычисляем потенциальную следующую позицию
-      const nextHead = getNextHead(prev[0], direction);
-      // Передаем ее в wrapAround вместе с направлением для коррекции
-      const newHead = wrapAround(nextHead, direction);
+      const head = prev[0];
+      let newHead;
+      const totalCells = rows * cols;
+
+      // Определяем новую голову змейки с учетом телепортации
+      switch (direction) {
+        case 'right':
+          // Если у правой границы, телепорт на левую сторону той же строки
+          if (head % cols === cols - 1) {
+            newHead = head - cols + 1;
+          } else {
+            newHead = head + 1;
+          }
+          break;
+        case 'left':
+          // Если у левой границы, телепорт на правую сторону той же строки
+          if (head % cols === 0) {
+            newHead = head + cols - 1;
+          } else {
+            newHead = head - 1;
+          }
+          break;
+        case 'up':
+          // Если у верхней границы, телепорт на нижнюю
+          newHead = head - cols;
+          if (newHead < 0) {
+            newHead += totalCells; // newHead = head - cols + totalCells
+          }
+          break;
+        case 'down':
+          // Если у нижней границы, телепорт на верхнюю
+          // Оператор остатка от деления (%) отлично справляется с этим
+          newHead = (head + cols) % totalCells;
+          break;
+        default:
+          // Этот случай не должен произойти
+          newHead = head;
+          break;
+      }
 
       let newSnake: number[];
 
       if (newHead === food) {
-        // поедание, добавляем голову, не удаляем хвост, перемещаем еду
+        // Поедание: добавляем голову, не удаляем хвост, перемещаем еду
         newSnake = [newHead, ...prev];
         setFood(getRandomFreeCell(newSnake));
       } else {
-        // обычный ход, обрезаем хвост
+        // Обычный ход: добавляем голову, обрезаем хвост
         newSnake = [newHead, ...prev.slice(0, -1)];
       }
 
