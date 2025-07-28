@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 export default function GridPage() {
   const [snake, setSnake] = useState<Array<number>>([12, 11, 10]);
-  const [food, setFood] = useState<number>(15);
+  const [food, setFood] = useState<number>(20);
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>(
     'right',
   );
@@ -13,36 +13,30 @@ export default function GridPage() {
   const cols = 20;
 
   // Вычисляем следующий индекс головы
+  // prettier-ignore
   const getNextHead = (currentHead: number, direction: string): number => {
     switch (direction) {
-      case 'right':
-        return currentHead + 1;
-      case 'left':
-        return currentHead - 1;
-      case 'up':
-        return currentHead - cols;
-      case 'down':
-        return currentHead + cols;
-      default:
-        return currentHead;
+      case 'right': return currentHead + 1;
+      case 'left':  return currentHead - 1;
+      case 'up':    return currentHead - cols;
+      case 'down':  return currentHead + cols;
+      default:      return currentHead;
     }
   };
 
-  // TODO:Телепортация за границами
+  // Телепортация за границами
   const wrapAround = (index: number, direction: string): number => {
     // Получаем координаты головы
-    const row = Math.floor(index / cols);
+    const totalCells = rows * cols;
     const col = index % cols;
-    let newRow = row;
-    let newCol = col;
 
     // Проверяем, не выходит ли голова за границы сетки
-    if (direction === 'right' && col >= cols) newCol = 0;
-    if (direction === 'left' && col < 0) newCol = cols - 1;
-    if (direction === 'down' && row >= rows) newRow = 0;
-    if (direction === 'up' && row < 0) newRow = rows - 1;
+    if (direction === 'right' && col == 0) return index - cols;
+    if (direction === 'left' && col == cols - 1) return index + cols;
+    if (direction === 'down' && index >= totalCells) return index % totalCells;
+    if (direction === 'up' && index < 0) return index + totalCells;
 
-    return newRow * cols + newCol;
+    return index;
   };
 
   // Получаем случайную свободную клетку
@@ -58,7 +52,11 @@ export default function GridPage() {
   // Движение змейки
   const moveSnake = () => {
     setSnake((prev) => {
-      const newHead = wrapAround(getNextHead(prev[0], direction));
+      // Вычисляем потенциальную следующую позицию
+      const nextHead = getNextHead(prev[0], direction);
+      // Передаем ее в wrapAround вместе с направлением для коррекции
+      const newHead = wrapAround(nextHead, direction);
+
       let newSnake: number[];
 
       if (newHead === food) {
