@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function GridPage() {
   const [snake, setSnake] = useState<Array<number>>([12, 11, 10]);
-  const [food, setFood] = useState<number>(20);
+  const [food, setFood] = useState<number>(15);
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>(
     'right',
   );
@@ -23,7 +23,7 @@ export default function GridPage() {
   };
 
   // Движение змейки
-  const moveSnake = () => {
+  const moveSnake = useCallback(() => {
     setSnake((prev) => {
       const head = prev[0];
       let newHead;
@@ -56,11 +56,9 @@ export default function GridPage() {
           break;
         case 'down':
           // Если у нижней границы, телепорт на верхнюю
-          // Оператор остатка от деления (%) отлично справляется с этим
           newHead = (head + cols) % totalCells;
           break;
         default:
-          // Этот случай не должен произойти
           newHead = head;
           break;
       }
@@ -78,7 +76,7 @@ export default function GridPage() {
 
       return newSnake;
     });
-  };
+  }, [direction, food, rows, cols]);
 
   // Автодвижение
   useEffect(() => {
@@ -87,7 +85,7 @@ export default function GridPage() {
     }, 300);
 
     return () => clearInterval(interval);
-  }, [direction]);
+  }, [moveSnake]);
 
   // Управление
   useEffect(() => {
