@@ -24,14 +24,34 @@ export default function GridPage() {
     const randomDirection =
       directions[Math.floor(Math.random() * directions.length)];
 
-    // Создаем новую змейку в центре поля
+    // Создаем голову змейки в центре поля
     const startHead = Math.floor(rows / 2) * cols + Math.floor(cols / 2);
-    const newSnake = [startHead, startHead - 1, startHead - 2];
+
+    let newSnake: number[];
+
+    // Генерируем тело змейки в зависимости от направления
+    switch (randomDirection) {
+      case 'right':
+        // Голова движется вправо, тело позади (слева)
+        newSnake = [startHead, startHead - 1, startHead - 2];
+        break;
+      case 'left':
+        // Голова движется влево, тело позади (справа)
+        newSnake = [startHead, startHead + 1, startHead + 2];
+        break;
+      case 'down':
+        // Голова движется вниз, тело позади (сверху)
+        newSnake = [startHead, startHead - cols, startHead - 2 * cols];
+        break;
+      case 'up':
+        // Голова движется вверх, тело позади (снизу)
+        newSnake = [startHead, startHead + cols, startHead + 2 * cols];
+        break;
+    }
 
     // Обновляем все состояния
     setDirection(randomDirection);
     setSnake(newSnake);
-    // Помещаем еду в новую случайную ячейку, свободную от новой змейки
     setFood(getRandomFreeCell(newSnake));
   }, [rows, cols]); // Зависимости для useCallback
 
