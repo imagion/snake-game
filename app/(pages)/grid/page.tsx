@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function GridPage() {
@@ -9,6 +9,7 @@ export default function GridPage() {
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>(
     'right',
   );
+  const directionChangeLockRef = useRef(false);
   const rows = 20;
   const cols = 20;
 
@@ -67,6 +68,9 @@ export default function GridPage() {
 
   // Движение змейки
   const moveSnake = useCallback(() => {
+    // В начале каждого хода "открываем" замок для смены направления
+    directionChangeLockRef.current = false;
+
     setSnake((prev) => {
       const head = prev[0];
       const tail = prev.slice(1);
@@ -129,15 +133,26 @@ export default function GridPage() {
   // Управление
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Если замок закрыт, ничего не делаем
+      if (directionChangeLockRef.current) {
+        return;
+      }
+
       const key = e.key;
-      if (key === 'ArrowRight' && direction !== 'left') {
+      const currentDirection = direction;
+
+      if (key === 'ArrowRight' && currentDirection !== 'left') {
         setDirection('right');
-      } else if (key === 'ArrowLeft' && direction !== 'right') {
+        directionChangeLockRef.current = true;
+      } else if (key === 'ArrowLeft' && currentDirection !== 'right') {
         setDirection('left');
-      } else if (key === 'ArrowUp' && direction !== 'down') {
+        directionChangeLockRef.current = true;
+      } else if (key === 'ArrowUp' && currentDirection !== 'down') {
         setDirection('up');
-      } else if (key === 'ArrowDown' && direction !== 'up') {
+        directionChangeLockRef.current = true;
+      } else if (key === 'ArrowDown' && currentDirection !== 'up') {
         setDirection('down');
+        directionChangeLockRef.current = true;
       }
     };
 
