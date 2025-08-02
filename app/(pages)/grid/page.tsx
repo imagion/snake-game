@@ -9,6 +9,7 @@ export default function GridPage() {
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>(
     'right',
   );
+  const [score, setScore] = useState<number>(0);
   const directionChangeLockRef = useRef(false);
   const rows = 20;
   const cols = 20;
@@ -33,19 +34,15 @@ export default function GridPage() {
     // Генерируем тело змейки в зависимости от направления
     switch (randomDirection) {
       case 'right':
-        // Голова движется вправо, тело позади (слева)
         newSnake = [startHead, startHead - 1, startHead - 2];
         break;
       case 'left':
-        // Голова движется влево, тело позади (справа)
         newSnake = [startHead, startHead + 1, startHead + 2];
         break;
       case 'down':
-        // Голова движется вниз, тело позади (сверху)
         newSnake = [startHead, startHead - cols, startHead - 2 * cols];
         break;
       case 'up':
-        // Голова движется вверх, тело позади (снизу)
         newSnake = [startHead, startHead + cols, startHead + 2 * cols];
         break;
     }
@@ -54,7 +51,8 @@ export default function GridPage() {
     setDirection(randomDirection);
     setSnake(newSnake);
     setFood(getRandomFreeCell(newSnake));
-  }, [rows, cols]); // Зависимости для useCallback
+    setScore(0);
+  }, [rows, cols]);
 
   // Получаем случайную свободную клетку
   const getRandomFreeCell = (occupied: number[]): number => {
@@ -68,7 +66,6 @@ export default function GridPage() {
 
   // Движение змейки
   const moveSnake = useCallback(() => {
-    // В начале каждого хода "открываем" замок для смены направления
     directionChangeLockRef.current = false;
 
     setSnake((prev) => {
@@ -102,7 +99,7 @@ export default function GridPage() {
       }
 
       if (tail.includes(newHead)) {
-        resetGame(); // Вызываем сброс игры
+        resetGame();
         return prev; // Возвращаем старое состояние, чтобы избежать ошибки обновления
       }
 
@@ -112,6 +109,7 @@ export default function GridPage() {
         // Поедание: добавляем голову, не удаляем хвост, перемещаем еду
         newSnake = [newHead, ...prev];
         setFood(getRandomFreeCell(newSnake));
+        setScore((prevScore) => prevScore + 1);
       } else {
         // Обычный ход: добавляем голову, обрезаем хвост
         newSnake = [newHead, ...prev.slice(0, -1)];
@@ -162,26 +160,30 @@ export default function GridPage() {
 
   return (
     <div className='flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900'>
-      {/* Контейнер грида */}
-      <div
-        className='grid gap-0.5'
-        style={{
-          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
-          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-          width: '400px',
-          height: '400px',
-        }}>
-        {/* Рендерим клетки */}
-        {Array.from({ length: rows * cols }).map((_, index) => (
-          <div
-            key={index}
-            className={cn(
-              'border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
-              snake.includes(index) ? 'bg-green-500 dark:bg-green-900' : '',
-              food === index ? 'bg-red-500 dark:bg-red-900' : '',
-            )}
-          />
-        ))}
+      <div className='flex flex-col items-center gap-4'>
+        <div
+          className='grid gap-0.5'
+          style={{
+            gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+            width: '400px',
+            height: '400px',
+          }}>
+          {/* Рендерим клетки */}
+          {Array.from({ length: rows * cols }).map((_, index) => (
+            <div
+              key={index}
+              className={cn(
+                'border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
+                snake.includes(index) ? 'bg-green-500 dark:bg-green-900' : '',
+                food === index ? 'bg-red-500 dark:bg-red-900' : '',
+              )}
+            />
+          ))}
+        </div>
+        <div className='text-2xl font-bold text-gray-800 dark:text-gray-200'>
+          Счет: {score}
+        </div>
       </div>
     </div>
   );
