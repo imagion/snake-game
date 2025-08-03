@@ -4,19 +4,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export default function GridPage() {
+  const rows = 20;
+  const cols = 20;
+
   const [snake, setSnake] = useState<Array<number>>([12, 11, 10]);
   const [food, setFood] = useState<number>(15);
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>(
     'right',
   );
   const [score, setScore] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
   const directionChangeLockRef = useRef(false);
-  const rows = 20;
-  const cols = 20;
 
-  // Сброс игры
-  const resetGame = useCallback(() => {
-    // Задаем случайное направление
+  const generateNewGameState = useCallback(() => {
     const directions: Array<'right' | 'left' | 'up' | 'down'> = [
       'right',
       'left',
@@ -25,34 +25,55 @@ export default function GridPage() {
     ];
     const randomDirection =
       directions[Math.floor(Math.random() * directions.length)];
-
-    // Создаем голову змейки в центре поля
     const startHead = Math.floor(rows / 2) * cols + Math.floor(cols / 2);
+    let snake: number[];
 
-    let newSnake: number[];
-
-    // Генерируем тело змейки в зависимости от направления
     switch (randomDirection) {
       case 'right':
-        newSnake = [startHead, startHead - 1, startHead - 2];
+        snake = [startHead, startHead - 1, startHead - 2];
         break;
       case 'left':
-        newSnake = [startHead, startHead + 1, startHead + 2];
+        snake = [startHead, startHead + 1, startHead + 2];
         break;
       case 'down':
-        newSnake = [startHead, startHead - cols, startHead - 2 * cols];
+        snake = [startHead, startHead - cols, startHead - 2 * cols];
         break;
       case 'up':
-        newSnake = [startHead, startHead + cols, startHead + 2 * cols];
+        snake = [startHead, startHead + cols, startHead + 2 * cols];
         break;
     }
 
-    // Обновляем все состояния
-    setDirection(randomDirection);
-    setSnake(newSnake);
-    setFood(getRandomFreeCell(newSnake));
-    setScore(0);
+    // Внутренняя функция для получения еды, чтобы избежать конфликтов видимости
+    const getFood = (occupied: number[]): number => {
+      const maxIndex = rows * cols - 1;
+      let rand: number;
+      do {
+        rand = Math.floor(Math.random() * (maxIndex + 1));
+      } while (occupied.includes(rand));
+      return rand;
+    };
+
+    return {
+      snake,
+      food: getFood(snake),
+      direction: randomDirection,
+    };
   }, [rows, cols]);
+
+  // Сброс игры
+  const resetGame = useCallback(() => {
+    const newState = generateNewGameState();
+    setDirection(newState.direction);
+    setSnake(newState.snake);
+    setFood(newState.food);
+    setScore(0);
+  }, [generateNewGameState]);
+
+  // Случайный старт
+  useEffect(() => {
+    resetGame();
+    setIsLoading(false);
+  }, [resetGame]);
 
   // Получаем случайную свободную клетку
   const getRandomFreeCell = (occupied: number[]): number => {
@@ -175,8 +196,12 @@ export default function GridPage() {
               key={index}
               className={cn(
                 'border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
-                snake.includes(index) ? 'bg-green-500 dark:bg-green-900' : '',
-                food === index ? 'bg-red-500 dark:bg-red-900' : '',
+                !isLoading && snake.includes(index)
+                  ? 'bg-green-500 dark:bg-green-900'
+                  : '',
+                !isLoading && food === index
+                  ? 'bg-red-500 dark:bg-red-900'
+                  : '',
               )}
             />
           ))}
