@@ -165,19 +165,33 @@ export default function GridPage() {
         return;
       }
 
-      const key = e.key;
+      const key = e.code;
       const currentDirection = direction;
 
-      if (key === 'ArrowRight' && currentDirection !== 'left') {
+      console.log('key:', key);
+
+      if (
+        (key === 'ArrowRight' || key === 'KeyD') &&
+        currentDirection !== 'left'
+      ) {
         setDirection('right');
         directionChangeLockRef.current = true;
-      } else if (key === 'ArrowLeft' && currentDirection !== 'right') {
+      } else if (
+        (key === 'ArrowLeft' || key === 'KeyA') &&
+        currentDirection !== 'right'
+      ) {
         setDirection('left');
         directionChangeLockRef.current = true;
-      } else if (key === 'ArrowUp' && currentDirection !== 'down') {
+      } else if (
+        (key === 'ArrowUp' || key === 'KeyW') &&
+        currentDirection !== 'down'
+      ) {
         setDirection('up');
         directionChangeLockRef.current = true;
-      } else if (key === 'ArrowDown' && currentDirection !== 'up') {
+      } else if (
+        (key === 'ArrowDown' || key === 'KeyS') &&
+        currentDirection !== 'up'
+      ) {
         setDirection('down');
         directionChangeLockRef.current = true;
       }
