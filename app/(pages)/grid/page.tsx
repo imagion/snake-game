@@ -14,6 +14,9 @@ export default function GridPage() {
   );
   const [score, setScore] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [gameStatus, setGameStatus] = useState<'playing' | 'gameOver'>(
+    'playing',
+  );
   const directionChangeLockRef = useRef(false);
 
   const generateNewGameState = useCallback(() => {
@@ -67,6 +70,7 @@ export default function GridPage() {
     setSnake(newState.snake);
     setFood(newState.food);
     setScore(0);
+    setGameStatus('playing');
   }, [generateNewGameState]);
 
   // Случайный старт
@@ -120,8 +124,8 @@ export default function GridPage() {
       }
 
       if (tail.includes(newHead)) {
-        resetGame();
-        return prev; // Возвращаем старое состояние, чтобы избежать ошибки обновления
+        setGameStatus('gameOver');
+        return prev;
       }
 
       let newSnake: number[];
@@ -138,16 +142,20 @@ export default function GridPage() {
 
       return newSnake;
     });
-  }, [direction, food, resetGame]);
+  }, [direction, food]);
 
   // Автодвижение
   useEffect(() => {
+    if (gameStatus !== 'playing') {
+      return;
+    }
+
     const interval = setInterval(() => {
       moveSnake();
     }, 300);
 
     return () => clearInterval(interval);
-  }, [moveSnake]);
+  }, [gameStatus, moveSnake]);
 
   // Управление
   useEffect(() => {
@@ -181,33 +189,58 @@ export default function GridPage() {
 
   return (
     <div className='flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900'>
-      <div className='flex flex-col items-center gap-4'>
-        <div
-          className='grid gap-0.5'
-          style={{
-            gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
-            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-            width: '400px',
-            height: '400px',
-          }}>
-          {/* Рендерим клетки */}
-          {Array.from({ length: rows * cols }).map((_, index) => (
-            <div
-              key={index}
-              className={cn(
-                'border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800',
-                !isLoading && snake.includes(index)
-                  ? 'bg-green-500 dark:bg-green-900'
-                  : '',
-                !isLoading && food === index
-                  ? 'bg-red-500 dark:bg-red-900'
-                  : '',
-              )}
-            />
-          ))}
+      <div className='flex flex-col items-center gap-5 rounded-xl bg-slate-200 p-6 shadow-2xl dark:bg-slate-700'>
+        {/* Панель счета */}
+        <div className='w-full rounded-md bg-white p-2 text-center dark:bg-gray-800'>
+          <p className='text-lg font-medium text-gray-500 dark:text-gray-400'>
+            Счет:{' '}
+            <span className='font-mono text-xl font-bold text-green-500'>
+              {score}
+            </span>
+          </p>
         </div>
-        <div className='text-2xl font-bold text-gray-800 dark:text-gray-200'>
-          Счет: {score}
+        <div className='relative'>
+          <div
+            className='grid gap-0.5'
+            style={{
+              gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+              width: '400px',
+              height: '400px',
+            }}>
+            {/* Рендерим клетки */}
+            {Array.from({ length: rows * cols }).map((_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  'bg-slate-100 dark:bg-slate-900',
+                  !isLoading && snake.includes(index)
+                    ? 'bg-green-500 dark:bg-green-900'
+                    : '',
+                  !isLoading && food === index
+                    ? 'bg-red-500 dark:bg-red-900'
+                    : '',
+                )}
+              />
+            ))}
+          </div>
+
+          {/* Экран "Конец игры" */}
+          {gameStatus === 'gameOver' && (
+            <div className='animate-in fade-in absolute inset-0 flex flex-col items-center justify-center rounded-md bg-black/60 backdrop-blur-sm duration-500'>
+              <h2 className='text-5xl font-extrabold text-white drop-shadow-lg'>
+                Конец игры
+              </h2>
+              <p className='mt-4 text-xl text-white drop-shadow-lg'>
+                Итоговый счет: {score}
+              </p>
+              <button
+                onClick={resetGame}
+                className='mt-6 rounded-lg bg-green-500 px-6 py-2 font-bold text-white transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800'>
+                Играть снова
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
