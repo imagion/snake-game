@@ -159,40 +159,36 @@ export default function GridPage() {
 
   // Управление
   useEffect(() => {
+    // Карта, которая связывает клавиши с направлениями
+    // prettier-ignore
+    const keyMap: Record<string, 'right' | 'left' | 'up' | 'down'> = {
+      ArrowRight: 'right', KeyD: 'right',
+      ArrowLeft: 'left',   KeyA: 'left',
+      ArrowUp: 'up',       KeyW: 'up',
+      ArrowDown: 'down',   KeyS: 'down',
+    };
+
+    // Карта противоположных направлений для удобной проверки
+    const oppositeDirections: Record<string, string> = {
+      right: 'left',
+      left: 'right',
+      up: 'down',
+      down: 'up',
+    };
+
     const handler = (e: KeyboardEvent) => {
-      // Если замок закрыт, ничего не делаем
       if (directionChangeLockRef.current) {
         return;
       }
 
       const key = e.code;
-      const currentDirection = direction;
-
-      console.log('key:', key);
+      const intendedDirection = keyMap[key];
 
       if (
-        (key === 'ArrowRight' || key === 'KeyD') &&
-        currentDirection !== 'left'
+        intendedDirection &&
+        intendedDirection !== oppositeDirections[direction]
       ) {
-        setDirection('right');
-        directionChangeLockRef.current = true;
-      } else if (
-        (key === 'ArrowLeft' || key === 'KeyA') &&
-        currentDirection !== 'right'
-      ) {
-        setDirection('left');
-        directionChangeLockRef.current = true;
-      } else if (
-        (key === 'ArrowUp' || key === 'KeyW') &&
-        currentDirection !== 'down'
-      ) {
-        setDirection('up');
-        directionChangeLockRef.current = true;
-      } else if (
-        (key === 'ArrowDown' || key === 'KeyS') &&
-        currentDirection !== 'up'
-      ) {
-        setDirection('down');
+        setDirection(intendedDirection);
         directionChangeLockRef.current = true;
       }
     };
