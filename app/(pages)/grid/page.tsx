@@ -89,6 +89,30 @@ export default function GridPage() {
     return rand;
   };
 
+  // Смена направления
+  const attemptDirectionChange = useCallback(
+    (newDirection: 'right' | 'left' | 'up' | 'down') => {
+      // Если замок закрыт, ничего не делаем
+      if (directionChangeLockRef.current) {
+        return;
+      }
+
+      const oppositeDirections: Record<string, string> = {
+        right: 'left',
+        left: 'right',
+        up: 'down',
+        down: 'up',
+      };
+
+      // Проверяем, что новое направление не противоположно текущему
+      if (newDirection && newDirection !== oppositeDirections[direction]) {
+        setDirection(newDirection);
+        directionChangeLockRef.current = true;
+      }
+    },
+    [direction],
+  );
+
   // Движение змейки
   const moveSnake = useCallback(() => {
     directionChangeLockRef.current = false;
@@ -168,34 +192,17 @@ export default function GridPage() {
       ArrowDown: 'down',   KeyS: 'down',
     };
 
-    // Карта противоположных направлений для удобной проверки
-    const oppositeDirections: Record<string, string> = {
-      right: 'left',
-      left: 'right',
-      up: 'down',
-      down: 'up',
-    };
-
     const handler = (e: KeyboardEvent) => {
-      if (directionChangeLockRef.current) {
-        return;
-      }
+      const intendedDirection = keyMap[e.code];
 
-      const key = e.code;
-      const intendedDirection = keyMap[key];
-
-      if (
-        intendedDirection &&
-        intendedDirection !== oppositeDirections[direction]
-      ) {
-        setDirection(intendedDirection);
-        directionChangeLockRef.current = true;
+      if (intendedDirection) {
+        attemptDirectionChange(intendedDirection);
       }
     };
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [direction]);
+  }, [attemptDirectionChange]);
 
   return (
     <div className='flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900'>
@@ -215,8 +222,10 @@ export default function GridPage() {
             style={{
               gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
               gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-              width: '400px',
-              height: '400px',
+              width: '90vw',
+              height: '90vw',
+              maxWidth: '400px',
+              maxHeight: '400px',
             }}>
             {/* Рендерим клетки */}
             {Array.from({ length: rows * cols }).map((_, index) => (
@@ -234,6 +243,43 @@ export default function GridPage() {
               />
             ))}
           </div>
+
+          {gameStatus === 'playing' && (
+            <div className='absolute inset-0 md:hidden'>
+              {/* Верхняя зона */}
+              <div
+                onClick={() => attemptDirectionChange('up')}
+                className='absolute top-0 right-0 left-0 flex h-1/4 cursor-pointer items-center justify-center'>
+                <span className='text-3xl text-black/20 dark:text-white/20'>
+                  ↑
+                </span>
+              </div>
+              {/* Нижняя зона */}
+              <div
+                onClick={() => attemptDirectionChange('down')}
+                className='absolute right-0 bottom-0 left-0 flex h-1/4 cursor-pointer items-center justify-center'>
+                <span className='text-3xl text-black/20 dark:text-white/20'>
+                  ↓
+                </span>
+              </div>
+              {/* Левая зона (занимает центральную половину по высоте) */}
+              <div
+                onClick={() => attemptDirectionChange('left')}
+                className='absolute top-1/4 bottom-1/4 left-0 flex h-1/2 w-1/4 cursor-pointer items-center justify-center'>
+                <span className='text-3xl text-black/20 dark:text-white/20'>
+                  ←
+                </span>
+              </div>
+              {/* Правая зона */}
+              <div
+                onClick={() => attemptDirectionChange('right')}
+                className='absolute top-1/4 right-0 bottom-1/4 flex h-1/2 w-1/4 cursor-pointer items-center justify-center'>
+                <span className='text-3xl text-black/20 dark:text-white/20'>
+                  →
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Экран "Конец игры" */}
           {gameStatus === 'gameOver' && (
